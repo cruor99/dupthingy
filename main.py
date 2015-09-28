@@ -1,10 +1,13 @@
 from kivy.app import App
 from kivy.garden.filebrowser import FileBrowser
+from kivy.uix.image import AsyncImage as Image
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import StringProperty
 from kivy.uix.screenmanager import Screen
 from kivy.storage.jsonstore import JsonStore
-from os.path import sep, expanduser, isdir, dirname
+
+import os
+
 
 class FileScreen(Screen):
 
@@ -20,6 +23,7 @@ class FileScreen(Screen):
         pathstore = JsonStore("pathstore.json")
         pathstore.put("path", path=instance.selection)
         print instance.selection
+        self.manager.current="category_screen"
 
     def canceled(self, instance):
         self.manager.current="category_screen"
@@ -27,7 +31,39 @@ class FileScreen(Screen):
 
 class CategoryScreen(Screen):
 
-    pass
+    imagepath = StringProperty("")
+
+    def on_enter(self):
+        pathstore = JsonStore("pathstore.json")
+        if pathstore.exists("path"):
+            print pathstore["path"]
+            self.imagepath = pathstore["path"]["path"][0]
+            print self.imagepath
+            self.populateCarousel()
+
+    def populateCarousel(self):
+        imagenames = []
+        directories = []
+        fullpaths = []
+
+        for dirpath, dirnames, filenames in os.walk(self.imagepath):
+            directories.append(dirpath)
+            imagenames.append(filenames)
+
+        print imagenames
+        print directories
+        iterator = 0
+        print imagenames[0]
+
+        for path in directories:
+            for imagename in imagenames[iterator]:
+                fullpaths.append(path+"/"+imagename)
+
+            iterator += 1
+
+        for images in fullpaths:
+            image = Image(source=images, allow_stretch=True)
+            self.ids.gallery_carousel.add_widget(image)
 
 
 class DupRoot(BoxLayout):
